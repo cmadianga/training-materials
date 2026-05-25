@@ -5,6 +5,7 @@ LINUX_KERNEL_SLIDES = \
 	shopping-list-beaglebone \
 	shopping-list-beagleplay \
 	shopping-list-imx93-frdm \
+	shopping-list-stm32mp257 \
 	course-information \
 	setup-lab \
 	kernel-introduction-title \
@@ -88,6 +89,24 @@ LINUX_KERNEL_IMX93_FRDM_LABS = \
 	kernel-i2c-communication \
 	kernel-i2c-input-interface \
 	kernel-serial-iomem-imx93-frdm \
+	kernel-serial-output \
+	kernel-serial-interrupt \
+	kernel-locking \
+	kernel-serial-dma \
+	kernel-debugging \
+
+LINUX_KERNEL_STM32MP2_LABS = \
+	setup \
+	kernel-sources-download \
+	kernel-sources-exploring-stm32mp2 \
+	kernel-board-setup-stm32mp2 \
+	kernel-compiling-and-nfs-booting-stm32mp2 \
+	kernel-module-simple \
+	kernel-i2c-describing-hardware-stm32mp2 \
+	kernel-i2c-multiplexing-stm32mp2 \
+	kernel-i2c-communication \
+	kernel-i2c-input-interface \
+	kernel-serial-iomem-stm32mp2 \
 	kernel-serial-output \
 	kernel-serial-interrupt \
 	kernel-locking \
