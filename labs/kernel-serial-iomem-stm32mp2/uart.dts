@@ -1,0 +1,4 @@
+&usart6 {
+	compatible = "bootlin,serial";
+	status = "okay";
+};
