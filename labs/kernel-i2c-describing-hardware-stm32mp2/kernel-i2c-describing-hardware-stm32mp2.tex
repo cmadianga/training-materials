@@ -1,0 +1,235 @@
+\subchapter{Describing Hardware Devices}
+{Objective: learn how to describe hardware devices.}
+
+\section{Goals}
+
+Now that we covered the Device Tree theory, we can explore the list of
+existing devices and make new ones available. In particular, we will
+create a custom Device Tree to describe the few extensions we will make
+to our board.
+
+\section{Setup}
+
+Stay in the \code{~/__SESSION_NAME__-labs/src/linux} directory, you should be
+in the \code{bootlin-labs} branch.
+
+Download a useful document sharing useful details about the Nunchuk
+and its connector:\\
+\url{https://bootlin.com/labs/doc/nunchuk.pdf}
+
+\section{Create a custom device tree}
+
+To let the Linux kernel handle a new device, we need to add a
+description of this device in the board device tree.
+
+As the STM32MP257F-DK device tree is provided by STMicroelectronics,
+and will continue to evolve on its own, we don't want to make changes
+directly to the device tree file for this board.
+
+The easiest way to customize the board DTS is to create a new DTS file
+that includes the STM32MP257F-DK DTS, and adds its own definitions.
+
+So, create a new
+\code{arch/arm64/boot/dts/st/stm32mp257f-dk-custom.dts} file in which
+you just include the regular board DTS file. We will add further
+definitions in the next sections.
+
+\begin{verbatim}
+// SPDX-License-Identifier: GPL-2.0
+#include "stm32mp257f-dk.dts"
+\end{verbatim}
+
+Modify the \kfile{arch/arm64/boot/dts/st/Makefile} file to add your custom
+Device Tree, and then have it compiled with (\code{make dtbs}). Now,
+copy the new DTB to the tftp server home directory, change the DTB file
+name in the U-Boot configuration\footnote{Tip: you just need to run
+\code{editenv bootcmd} and \code{saveenv}.}, and boot the board.
+
+\section{Setting the board's model name}
+
+Modify the custom Device Tree file to override the model name for your
+system. Set the \code{model} property to \code{Training STMicroelectronics STM32MP257F-DK Discovery Board}. Don't hesitate to ask your instructor if you're not sure how.
+
+Recompile the device tree, and reboot the board with it. You should see
+the new model name in two different places:
+
+\begin{itemize}
+\item In the first kernel messages on the serial console.
+\item In \code{/sys/firmware/devicetree/base/model}. This can be
+      handy for a distribution to identify the device it's running on.
+\end{itemize}
+
+\section{Driving LEDs}
+
+The STM32MP257F-DK features four user LEDs (\code{LED1}, \code{LD7}, \code{LD8}, and \code{LD9})
+at different locations.
+
+Start by looking at the different description files and look for a node
+that would be defining the LEDs.
+
+Only one LED is actually supposed to be triggered by a driver matching
+the compatible \code{gpio-leds}. This is a generic driver which acts on
+LEDs connected to GPIOs. But as you can observe, despite being part of
+the in-use Device Tree, the LED remains off. The reason for that is the
+absence of driver for this node: nothing actually drives the LED even
+if it is described. So you can start by recompiling your kernel with
+\kconfigval{CONFIG_LEDS_GPIO}{y}.
+
+You should now see \code{LED1} blink with the CPU activity.
+
+\section{Managing I2C buses and devices}
+
+The next thing we want to do is connect an Nunchuk joystick
+to an I2C bus on our board. The I2C bus is very frequently used
+to connect all sorts of external devices. That's why we're covering
+it here.
+
+\subsection{Enabling an I2C bus}
+
+The STM32MP257F-DK has two I2C buses available through the GPIO connector:
+
+\begin{itemize}
+\item I2C2
+\item I2C8
+\end{itemize}
+
+The STM32MP257FAK3 SoC has six others I2C controllers.
+One of them is used to handle STPMIC25 and the remaining ones are not used on the
+STM32MP257F-DK board.
+
+In this lab we will be using the I2C8 bus to connect the nunchuk.
+
+So, let's see which I2C buses are already enabled:
+
+\begin{bashinput}
+# i2cdetect -l
+i2c-0	i2c       	STM32F7 I2C(0x0000000040130000) 	I2C adapter
+\end{bashinput}
+
+As the bus numbering scheme in Linux doesn't always match the one
+on the datasheets, let's check the base addresses of the registers
+of these controllers:
+
+\begin{bashinput}
+# ls -l /sys/bus/i2c/devices/i2c-0
+lrwxrwxrwx    1 root     root             0 Jan  1 02:02 /sys/bus/i2c/devices/i2c-0 -> ../../../devices/platform/soc@0/42080000.bus/40130000.i2c/i2c-0
+\end{bashinput}
+
+Now let's check which I2C buses matches with these addresses by looking at the
+\href{https://www.st.com/resource/en/reference_manual/rm0457-stm32mp2325xx-advanced-armbased-3264bit-mpus-stmicroelectronics.pdf}{ST STM32MP23/25xx SoC reference manual},
+in the \code{Memory map and register boundary addresses} section:
+
+\begin{itemize}
+\item I2C8 is at address \code{0x46040000}
+\item I2C2 is at address \code{0x40130000}
+\end{itemize}
+
+So, \code{i2c-0} in Linux corresponds to I2C2 in the datasheet,
+but reminder we want to use I2C8 in our case.
+
+Fortunately, I2C8 is already defined in 
+\kfile{arch/arm64/boot/dts/st/stm32mp257f-dk-custom.dts}.
+Look by yourself in this file, and you will find its definition,
+but with \code{status = "disabled";}.
+This means that this I2C controller is not enabled yet,
+and it's up to boards using it to do so.
+
+Make a reference to this definition in your custom DTS and enable this
+bus. Also configure it to function at 100 KHz. Reboot your board with
+the update.
+
+Back to the running system, we can now see that there is one more
+I2C bus:
+
+\begin{bashinput}
+ i2cdetect -l
+i2c-1	i2c       	STM32F7 I2C(0x0000000046040000) 	I2C adapter
+i2c-0	i2c       	STM32F7 I2C(0x0000000040130000) 	I2C adapter
+\end{bashinput}
+
+Run the below command to confirm that the new bus has the same address
+as in the datasheet (\code{0x46040000}):
+
+\bashcmd{ls -l /sys/bus/i2c/devices/i2c-1}
+
+\subsection{Prepare the I2C device DT description}
+
+Before describing your nunchuk device, let's think about what will be
+needed:
+\begin{itemize}
+\item The device node should follow a standard pattern.
+
+  The node name should be \code{joystick@addr}, the convention for node
+  names is \code{<device-type>@<addr>}.
+
+\item We want to be able to fully identify the programming model.
+
+  This is usually done using a unique compatible string. The compatible
+  contains a vendor prefix and then a more specific string. We will use
+  \code{nintendo,nunchuk}.
+
+\item We need to identify how to reach the device.
+
+  This is the \code{reg} property and we should set it to the I2C
+  address of the nunchuk. You will find the I2C slave address of the
+  Nunchuk on the nunckuk document that we have downloaded
+  earlier\footnote{This I2C slave address is enforced by the device
+    itself. You can't change it.}.
+
+\item (Optional) There are two types of nunchuks.
+
+  There are white and black nunchuks, which don't expect the same
+  initialization flow. We could imagine a boolean property named
+  \code{nintendo,alternate-init} which will change the initialization
+  logic. See the nunchuk pdf for details about the alternate flow.
+
+\end{itemize}
+
+Stopping here is sufficient as writing device-tree bindings is not
+strictly required to continue the labs, but if you feel comfortable
+you may want to write your own binding file, eg:
+\begin{bashinput}
+Documentation/devicetree/bindings/misc/nintendo,nunchuk.yaml
+\end{bashinput}
+Once you are confident with your bindings, you can even copy the
+examples from the \code{wrong-nunchuk-examples.yaml} (in the
+\code{nunchuk} labs folder) inside your bindings and verify they all
+pass/fail as expected!
+\begin{bashinput}
+make DT_SCHEMA_FILES=misc/nintendo,nunchuk.yaml dt_binding_check
+\end{bashinput}
+
+\subsection{Declare the Nunchuk device}
+
+As a child node to the \code{i2c8} bus, now declare an I2C device
+for the Nunchuk, following the above rules.
+
+If you wrote an optional YAML binding, you can also double check your
+node:
+\begin{bashinput}
+make DT_SCHEMA_FILES=misc/nintendo,nunchuk.yaml dtbs_check
+\end{bashinput}
+
+After updating the running Device Tree, explore
+\code{/sys/firmware/devicetree}, where every subdirectory corresponds to
+a DT node, and every file corresponds to a DT property. You can search
+for presence of the new \code{joystick} node:
+
+{\small
+\begin{verbatim}
+# find /sys/firmware/devicetree -name "*joystick*"
+/sys/firmware/devicetree/base/soc@0/bus@42080000/i2c@46040000/joystick@52
+\end{verbatim}
+}
+
+You can also check the whole structure of the loaded Device Tree, using
+the Device Tree Compiler (\code{dtc}), which we put in the root
+filesystem:
+\begin{verbatim}
+# dtc -I fs /sys/firmware/devicetree/base/ > /tmp/dts
+# grep -C10 nunchuk /tmp/dts
+\end{verbatim}
+
+Once your new Device Tree seems correct, commit your changes. As you
+modified a shared file and a custom file, it is good practice to commit
+these changes in two different patches.
