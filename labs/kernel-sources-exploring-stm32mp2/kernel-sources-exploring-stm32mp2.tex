@@ -1,0 +1,79 @@
+\subchapter{Kernel source code}{Objective: Get familiar with the
+  kernel source code}
+
+After this lab, you will be able to:
+
+\begin{itemize}
+
+\item Create a branch based on a remote tree to explore a particular
+      stmicro kernel version (from the \code{stmicro} kernel tree).
+\item Explore the sources and search for files, function headers or
+  other kinds of information\ldots
+\item Browse the kernel sources with a tool like Elixir.
+\end{itemize}
+
+\section{Choose a particular stmicro version}
+
+Let's work with a particular stmicro version of the Linux kernel.
+It would have been more logical to do this in the previous lab, but we
+wanted to get back to lectures while the \code{fetch} command was
+running.
+
+First, let's get the list of branches on our remote trees:
+
+\begin{verbatim}
+cd ~/__SESSION_NAME__-labs/src/linux
+git branch -a
+\end{verbatim}
+
+As we will do our labs with the Linux 6.6 stable branch, the remote branch
+we are interested in is \code{remotes/stmicro/v6.6-stm32mp}.
+
+First, execute the following command to check which version you
+currently have:
+
+\begin{verbatim}
+make kernelversion
+\end{verbatim}
+
+You can also open the \code{Makefile} and look at the beginning of it
+to check this information.
+
+Now, let's create a local branch starting from that remote branch:
+\begin{verbatim}
+git checkout -b bootlin-labs stmicro/v6.6-stm32mp
+\end{verbatim}
+
+Check the version again using the \code{make kernelversion} command
+to make sure you now have a 6.6.y version.
+
+\section{Exploring the sources manually}
+
+As a Linux kernel user, you will very often need to find which file
+implements a given function. So, it is useful to be familiar with
+exploring the kernel sources.
+
+\begin{enumerate}
+\item Find the Linux logo image in the sources\footnote{Look for
+      files in \code{logo} in their name. It's an
+      opportunity to practise with the \code{find} command.}.
+\item Find who the maintainer of the MVNETA network driver is.
+\item Find the declaration of the \kfunc{platform_device_register} function.
+\end{enumerate}
+
+Tip: if you need the \code{grep} command, we advise you to use \code{git
+grep}. This command is similar, but much faster, doing the search only
+on the files managed by git (ignoring git internal files and generated
+files).
+
+\section{Use a kernel source indexing tool}
+
+Now that you know how to do things in a manual way, let's use more
+automated tools.
+
+Try Elixir at \url{https://elixir.bootlin.com}
+and choose the Linux version closest to yours.
+
+As in the previous section, use this tool to find where
+the \kfunc{platform_device_register} function is declared, implemented and
+even used.
