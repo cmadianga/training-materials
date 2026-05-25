@@ -59,7 +59,21 @@ of time for you too. You can check by running:
 git branch -a
 \end{verbatim}
 
-We will choose a particular stable version in the next labs.
+\if\defstring{\board}{stm32mp2}{
+As the code to support the STM32MP257F-DK is not fully in the official
+upstream Linux kernel repository, we will also add stable release from
+STMicroelectronis Linux kernel repository.
+
+\begin{verbatim}
+git remote add stmicro https://github.com/STMicroelectronics/linux.git
+git fetch stmicro
+\end{verbatim}
+}{}
+\fi
+
+We will choose a particular stable version
+\ifdefstring{\board}{stm32mp2}{from STMicroelectronics repository}{}
+in the next labs.
 
 Now, let's continue the lectures. This will leave time for the commands
 that you typed to complete their execution (if needed).
