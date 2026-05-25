@@ -1,10 +1,16 @@
 \newtoggle{stm32mp257-nunchuk}
 \settoggle{stm32mp257-nunchuk}{false}
 \ifdefstring{\training}{embedded-linux}{\settoggle{stm32mp257-nunchuk}{true}}{}
+\ifdefstring{\training}{linux-kernel}{\settoggle{stm32mp257-nunchuk}{true}}{}
 
 \newtoggle{stm32mp257-audio}
 \settoggle{stm32mp257-audio}{false}
 \ifdefstring{\training}{embedded-linux}{\settoggle{stm32mp257-audio}{true}}{}
+
+\newtoggle{stm32mp257-serial}
+\settoggle{stm32mp257-serial}{false}
+\ifdefstring{\training}{linux-kernel}{\settoggle{stm32mp257-serial}{true}}{}
+
 \begin{frame}
 \frametitle{STM32MP257 shopping list}
   \footnotesize
@@ -28,8 +34,13 @@
              \footnote{\tiny \url{https://www.olimex.com/Products/Breadboarding/JUMPER-WIRES/JW-110x10/}}
 	}{}
         \item MicroSD card
+	\item RJ45 cable
         \iftoggle{stm32mp257-audio}{
         \item A standard USB audio headset
+	}{}
+	\iftoggle{stm32mp257-serial}{
+	\item USB Serial Cable - 3.3 V - Female and male ends (for serial lab)
+	 \footnote{\tiny \url{https://www.olimex.com/Products/USB-Modules/Interfaces/USB-SERIAL-F}}
 	}{}
     \end{itemize}
     \column{0.2\textwidth}
@@ -42,6 +53,9 @@
     \iftoggle{stm32mp257-audio}{
     \includegraphics[width=0.6\textwidth]{common/usb-audio.png}\\
     }{}
+    \iftoggle{stm32mp257-serial}{
+    \includegraphics[width=0.6\textwidth]{common/usb-serial-cable-female.jpg}\\
+    }{}	    
     \end{center}
   \end{columns}
   \vspace{0.5em}
