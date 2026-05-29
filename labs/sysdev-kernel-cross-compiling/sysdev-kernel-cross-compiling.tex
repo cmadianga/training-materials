@@ -3,7 +3,7 @@ cross-compile a kernel for an ARM target platform.}
 
 After this lab, you will be able to:
 \begin{itemize}
-\item Checkout a stable version of the Linux kernel
+\item Checkout a \ifdefstring{\labboard}{stm32mp2}{particular}{stable} version of the Linux kernel
 \item Set up a cross-compiling environment
 \item Cross compile the kernel for the \labboarddescription
 \item Use U-Boot to download the kernel
@@ -14,11 +14,11 @@ After this lab, you will be able to:
 
 Stay in the \code{$HOME/__SESSION_NAME__-labs/kernel} directory.
 
-\section{Choose a particular stable version of Linux}
+\section{Choose a particular \ifdefstring{\labboard}{stm32mp2}{version}{stable version} of Linux}
 
 We will use \texttt{linux-\workingkernel.x},
 \ifdefstring{\labboard}{qemu}{}{%
-  \ifdefstring{\labboard}{beagleplay}{}{which corresponds to an LTS release, and}
+  \ifdefstring{\labboardarch}{64bit}{}{which corresponds to an LTS release, and}
 }
 which this lab was tested with.
 
@@ -31,7 +31,7 @@ git branch -a
 
 As we will do our labs with the Linux \workingkernel,
 the remote branch we are interested in is\\%without this, you get a line overflow, weird
-\texttt{remotes/stable/linux-\workingkernel.y}.
+\texttt{remotes/\ifdefstring{\labboard}{stm32mp2}{stmicro}{stable}/\ifdefstring{\labboard}{stm32mp2}{v6.6-stm32mp}{linux-\workingkernel.y}}.
 
 First, execute the following command to check which version you
 currently have:
@@ -44,9 +44,15 @@ You can also open the \code{Makefile} and look at the beginning of it
 to check this information.
 
 Now, let's create a local branch starting from that remote branch:
+\if\defstring{\labboard}{stm32mp2}
+\begin{bashinput}
+git checkout stmicro/v6.6-stm32mp
+\end{bashinput}
+\else
 \begin{bashinput}
 git checkout stable/linux-%\workingkernel%.y
 \end{bashinput}
+\fi
 
 Check the version again using the \code{make kernelversion} command
 to make sure you now have a \workingkernel.x version.
@@ -58,7 +64,7 @@ toolchain. We will use the cross-compiling toolchain that we
 previously produced, so we just need to make it available in the PATH:
 
 \begin{bashinput}
-$ export PATH=$HOME/x-tools/%\ifdefstring{\labboard}{beagleplay}{aarch64-training-linux-musl}{arm-training-linux-musleabihf}%/bin:$PATH
+$ export PATH=$HOME/x-tools/%\ifdefstring{\labboardarch}{64bit}{aarch64-training-linux-musl}{arm-training-linux-musleabihf}%/bin:$PATH
 \end{bashinput}
 
 Also, don't forget to either:
@@ -69,7 +75,7 @@ Also, don't forget to either:
 \item {\bf Or} specify them on the command line at every invocation of
   \code{make}, i.e.: \code{make ARCH=... CROSS_COMPILE=... <target>}
 \end{itemize}
-\ifdefstring{\labboard}{beagleplay}{
+\ifdefstring{\labboardarch}{64bit}{
 \textbf{Important:} The majority of tools use \code{aarch64} to define 64 bits
 ARM processors. However in specific cases, the tools may use \code{arm64} to 
 define such architecture. In the case of the kernel Makefile we will use the
@@ -89,7 +95,7 @@ kernel.}{}
 \ifdefstring{\labboard}{beaglebone}
 {In our case look for a configuration for boards in the OMAP2 and
 later family which the AM335x found in the BeagleBone belongs to.}{}
-\ifdefstring{\labboard}{beagleplay}
+\ifdefstring{\labboardarch}{64bit}
 {If you search for a configuration file that corresponds to the \code{arm64}
 architecture that the kernel will use, you might see that only one
 \code{defconfig} file is available. We will therefore load this basic
@@ -140,6 +146,18 @@ for the Texas Instruments Inc. K3 multicore SoC architecture.
 \item Disable \kconfig{CONFIG_DRM}, which will skip support for many display
 controller and GPU drivers.
 }{}
+\ifdefstring{\labboard}{stm32mp2}{
+\item In the \code{Platform Selection} menu, remove support for all the SoCs except
+for the STMicroelectronis STM32 SoC Family.
+\item Disable \kconfig{CONFIG_DRM}, which will skip support for many display
+controller and GPU drivers.
+\item Disable the below items to avoid compilation issue with our kernel version:
+\begin{itemize}
+\item \kconfig{CONFIG_MLX5_CORE}
+\item \kconfig{CONFIG_TOUCHSCREEN_EDT_FT5X06}
+\item \kconfig{CONFIG_TOUCHSCREEN_GOODIX}
+\end{itemize}
+}{}
 \end{itemize}
 
 \ifdefstring{\labboard}{stm32mp1}{
@@ -148,9 +166,9 @@ and most optimized kernel for STM32MP1: \code{multi_v7_defconfig}
 enables plenty of features and drivers that will not be useful on our
 particular board.}{}
 
-\ifdefstring{\labboard}{beagleplay}{
+\ifdefstring{\labboardarch}{64bit}{
 Please note that this will definitely not build the smallest and most
-optimized kernel for the BeaglePlay: the ARM64 \code{defconfig}
+optimized kernel for the \ifdefstring{\labboard}{beagleplay}{BeaglePay}{STM32MP257F-DK}: the ARM64 \code{defconfig}
 enables plenty of features and drivers that will not be useful on our
 particular board.}{}
 
@@ -189,13 +207,13 @@ We will use TFTP to load the kernel image on the board:
 
 \begin{itemize}
 
-\item On your workstation, copy the {\tt \ifdefstring{\labboard}{beagleplay}{Image.gz}{zImage}} and DTB
+\item On your workstation, copy the {\tt \ifdefstring{\labboardarch}{64bit}{Image.gz}{zImage}} and DTB
 (\texttt{\dtname}\texttt{.dtb}) to the directory exposed by the TFTP server.
 
-\item On the target (in the U-Boot prompt), load {\tt \ifdefstring{\labboard}{beagleplay}{Image.gz}{zImage}} from
+\item On the target (in the U-Boot prompt), load {\tt \ifdefstring{\labboardarch}{64bit}{Image.gz}{zImage}} from
 TFTP into RAM:
 \begin{ubootinput}
-=> tftp %\zimageboardaddr% %\ifdefstring{\labboard}{beagleplay}{Image.gz}{zImage}%
+=> tftp %\zimageboardaddr% %\ifdefstring{\labboardarch}{64bit}{Image.gz}{zImage}%
 \end{ubootinput}
 
 \item Now, also load the DTB file into RAM:
@@ -205,7 +223,7 @@ TFTP into RAM:
 
 \item Boot the kernel with its device tree:
 \begin{ubootinput}
-=> %\ifdefstring{\labboard}{beagleplay}{booti}{bootz} \zimageboardaddr% - %\dtbboardaddr%
+=> %\ifdefstring{\labboardarch}{64bit}{booti}{bootz} \zimageboardaddr% - %\dtbboardaddr%
 \end{ubootinput}
 
 \end{itemize}
@@ -243,7 +261,7 @@ You can now automate all this every time the board is booted or
 reset. Reset the board, and customize \code{bootcmd}:
 
 \begin{ubootinput}
-=> setenv bootcmd 'tftp %\zimageboardaddr\ \ifdefstring{\labboard}{beagleplay}{Image.gz}{zImage}; tftp \dtbboardaddr\ {\dtname}.dtb; \ifdefstring{\labboard}{beagleplay}{booti}{bootz} \zimageboardaddr\ - \dtbboardaddr'%
+=> setenv bootcmd 'tftp %\zimageboardaddr\ \ifdefstring{\labboardarch}{64bit}{Image.gz}{zImage}; tftp \dtbboardaddr\ {\dtname}.dtb; \ifdefstring{\labboardarch}{64bit}{booti}{bootz} \zimageboardaddr\ - \dtbboardaddr'%
 => saveenv
 \end{ubootinput}
 
