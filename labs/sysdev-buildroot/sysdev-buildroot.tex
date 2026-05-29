@@ -107,7 +107,7 @@ button whenever you need more details about a given option:
 \begin{itemize}
 \item \code{Target options}
   \begin{itemize}
-  \ifdefstring{\labboard}{beagleplay}{
+  \ifdefstring{\labboardarch}{64bit}{
   \item \code{Target Architecture}: \code{AArch64 (little endian)}
   }{
   \item \code{Target Architecture}: \code{ARM (little endian)}
@@ -119,15 +119,19 @@ button whenever you need more details about a given option:
    \item \code{Target Architecture Variant}: \code{cortex-A9}
    \item \code{Enable NEON SIMD extension support}: Enabled
    \item \code{Enable VFP extension support}: Enabled
+   }{
+   \ifdefstring{\labboard}{stm32mp2}{
+   \item \code{Target Architecture Variant}: \code{cortex-A35}
    }{%beaglebone or beagleplay
     \ifdefstring{\labboard}{beagleplay}{
     \item \code{Target Architecture Variant}: \code{cortex-A53}
     }{
     \item \code{Target Architecture Variant}: \code{cortex-A8}
+     }
     }
    }
   }
-  \ifdefstring{\labboard}{beagleplay}{}{
+  \ifdefstring{\labboardarch}{64bit}{}{
   \item \code{Target ABI}: \code{EABIhf}
   }
   \ifdefstring{\labboard}{stm32mp1}{
@@ -135,13 +139,18 @@ button whenever you need more details about a given option:
   }{
    \ifdefstring{\labboard}{qemu}{
    \item \code{Floating point strategy}: \code{VFPv3-D16}
+   }
+   {
+   \ifdefstring{\labboard}{stm32mp2}{
+   \item \code{Floating point strategy}: \code{FP-ARMv8}
    }{%beaglebone or beagleplay
     \ifdefstring{\labboard}{beagleplay}{
     \item \code{Floating point strategy}: \code{FP-ARMv8}
     }{
     \item \code{Floating point strategy}: \code{VFPv3-D16}
+     }
     }
-   }
+   }		  
   }
   \end{itemize}
 \item \code{Toolchain}
@@ -149,7 +158,7 @@ button whenever you need more details about a given option:
   \item \code{Toolchain type}: \code{External toolchain}
   \item \code{Toolchain}: \code{Custom toolchain}
   \item \code{Toolchain path}: use the toolchain you built:
-  \ifdefstring{\labboard}{beagleplay}{
+  \ifdefstring{\labboardarch}{64bit}{
     \code{/home/<user>/x-tools/aarch64-training-linux-musl}
     }{
       \code{/home/<user>/x-tools/arm-training-linux-musleabihf}
@@ -166,9 +175,15 @@ button whenever you need more details about a given option:
 \item \code{Kernel}
   \begin{itemize}
   \item Enable \code{Linux Kernel}
-  \item Set \code{Kernel version} to \code{Custom version}
-  \item Set \code{Kernel version} to your kernel version. You can use \code{make kernelversion} to
-  get it from the Linux kernel source tree.
+   \ifdefstring{\labboard}{stm32mp2}{
+    \item Set \code{Kernel version} to \code{Custom Git repository}
+    \item Set \code{URL of Custom repository} to \code{https://github.com/STMicroelectronics/linux}
+    \item Set \code{Custom repository version} to \code{v6.6-stm32mp}
+    }{
+     \item Set \code{Kernel version} to \code{Custom version}
+     \item Set \code{Kernel version} to your kernel version. You can use \code{make kernelversion} to
+     get it from the Linux kernel source tree.	    
+   }
   \item Set \code{Custom kernel patches} to \code{board/bootlin/training/0001-Custom-DTS-for-Bootlin-lab.patch}
   \item Set \code{Kernel configuration} to \code{Using a custom (def)config file})
   \item Set \code{Configuration file path} to \code{board/bootlin/training/linux.config}
@@ -177,7 +192,8 @@ button whenever you need more details about a given option:
         \ifdefstring{\labboard}{stm32mp1}{\code{st/stm32mp157a-dk1-custom}}{}
         \ifdefstring{\labboard}{beaglebone}{\code{ti/omap/am335x-boneblack-custom}}{}
         \ifdefstring{\labboard}{beagleplay}{\code{ti/k3-am625-beagleplay-custom}}{}
-  \ifdefstring{\labboard}{beagleplay}{\item Set \code{Kernel Binary format} to \code{Image.gz}}{}
+        \ifdefstring{\labboard}{stm32mp2}{\code{st/stm32mp257f-dk-custom}}{}
+  \ifdefstring{\labboardarch}{64bit}{\item Set \code{Kernel Binary format} to \code{Image.gz}}{}
 \end{itemize}
 \item \code{Target packages}
   \begin{itemize}
