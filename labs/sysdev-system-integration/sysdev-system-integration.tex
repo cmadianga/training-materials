@@ -25,6 +25,19 @@ cd buildroot
 git checkout bootlin-labs
 \end{bashinput}
 
+\if\defstring{\labboard}{stm32mp2}
+In order to avoid some issues when we will try to boot our board with
+systemd activated, we need to disable \kconfig{CONFIG_DRM_ETNAVID} feature from
+linux kernel thanks to a fragment file.
+
+A fragment file is a list of kernel configuration that will be merged to the main kernel configuration file.
+
+To address this, le'ts copy this fragment file to \code{board/bootlin/training/}:
+
+\begin{bashinput}
+cp ../data/fragment-01-linux-cleanup.config board/bootlin/training
+\end{bashinput}
+\else
 In addition, in the next lab, we're going to use the {\em perf}
 debugging utility which is provided within the Linux kernel source
 code, and unfortunately, the current stable v6.12.x have a regression
@@ -39,6 +52,7 @@ cp ../data/0002-Revert-perf-tools-Create-source-symlink-in-perf-obje.patch board
 
 In one of the next steps, we're going to tell Buildroot apply this
 patch when it will build the Linux kernel.
+\fi
 
 \section{Root filesystem overlay}
 
@@ -66,7 +80,7 @@ Configure Buildroot as follows:
         This time, we will use a Bootlin ready-made toolchain for {\em
         glibc}, as this is necessary for using {\em systemd}.
   \item \code{Toolchain origin}: \code{Toolchain to be downloaded and installed}
-  \item \code{Bootlin toolchain variant}: \ifdefstring{\labboard}{beagleplay}
+  \item \code{Bootlin toolchain variant}: \ifdefstring{\labboardarch}{64bit}
         {\code{aarch64 glibc bleeding-edge 2022.08-1}}{\code{armv7-eabihf glibc bleeding-edge}}
   \item Select \code{Copy gdb server to the Target}
   \end{itemize}
@@ -82,22 +96,33 @@ Configure Buildroot as follows:
   \item Set \code{Kernel version} to \code{Custom version}
   \item Set \code{Kernel version} to \code{6.6.20}
   \else
+    \if\defstring{\labboard}{stm32mp2}
+  \item Set \code{Kernel version} to \code{Custom Git repository}
+  \item Set \code{URL of Custom repository} to \code{https://github.com/STMicroelectronics/linux}
+  \item Set \code{Custom repository version} to \code{v6.6-stm32mp}
+  \else
   \item Set \code{Kernel version} to \code{Custom version}
   \item Set \code{Kernel version} to your kernel version. You can use \code{make kernelversion} to
   get it from the Linux kernel source tree.
+    \fi
   \fi
   \item Set \code{Custom kernel patches} to
         \code{board/bootlin/training/0001-Custom-DTS-for-Bootlin-lab.patch}
-        \code{board/bootlin/training/0002-Revert-perf-tools-Create-source-symlink-in-perf-obje.patch}
+	\ifdefstring{\labboard}{stm32mp2}
+	{}
+	{\code{board/bootlin/training/0002-Revert-perf-tools-Create-source-symlink-in-perf-obje.patch}
         (separated by a whitespace)
+	}
   \item Set \code{Kernel configuration} to \code{Using a custom (def)config file})
   \item Set \code{Configuration file path} to \code{board/bootlin/training/linux.config}
+  \ifdefstring{\labboard}{stm32mp2}{\item Set \code{Additional configuration fragment files} to \code{board/bootlin/training/fragment-01-linux-cleanup.config}}{}
   \item Select \code{Build a Device Tree Blob (DTB)}
   \item Set \code{In-tree Device Tree Source file names} to
         \ifdefstring{\labboard}{stm32mp1}{\code{st/stm32mp157a-dk1-custom}}{}
         \ifdefstring{\labboard}{beaglebone}{\code{ti/omap/am335x-boneblack-custom}}{}
         \ifdefstring{\labboard}{beagleplay}{\code{ti/k3-am625-beagleplay-custom}}{}
-  \ifdefstring{\labboard}{beagleplay}{\item Set \code{Kernel Binary format} to \code{Image.gz}}{}
+        \ifdefstring{\labboard}{stm32mp2}{\code{st/stm32mp257f-dk-custom}}{}
+  \ifdefstring{\labboardarch}{64bit}{\item Set \code{Kernel Binary format} to \code{Image.gz}}{}
   \end{itemize}
 \item \code{Target packages}
   \begin{itemize}
