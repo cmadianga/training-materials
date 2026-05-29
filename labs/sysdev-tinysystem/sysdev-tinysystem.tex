@@ -43,9 +43,22 @@ We will re-use the kernel sources from our previous lab, in
 
 In the kernel configuration built in the previous lab, verify that you
 have all options needed for booting the system using a root filesystem
-mounted over NFS. Also check that \kconfig{CONFIG_DEVTMPFS_MOUNT} is
-enabled (we will explain it later in this lab). If necessary, rebuild
-your kernel.
+mounted over NFS.
+
+\ifdefstring{\labboard}{stm32mp2}{
+Add options to support Ethernet device as a feature in the kernel image instead of as a kernel module:
+\begin{itemize}
+  \item \kconfigval{CONFIG_STMMAC_ETH}{y}
+  \item \kconfigval{CONFIG_STMMAC_PLATORM}{y}
+  \item \kconfigval{CONFIG_DWMAC_GENERIC}{y}
+  \item \kconfigval{CONFIG_DWMAC_STM32}{y}
+\end{itemize}
+}{}
+
+Also check that \kconfig{CONFIG_DEVTMPFS_MOUNT} is
+enabled (we will explain it later in this lab).
+\ifdefstring{\labboard}{stm32mp2}{Rebuild your kernel}{If necessary, rebuild
+your kernel.}
 
 \section{Setting up the NFS server}
 
@@ -117,9 +130,15 @@ filesystem over NFS:
 VFS: Mounted root (nfs filesystem) on device 0:20.
 \end{verbatim}
 \else
+  \if\defstring{\labboard}{stm32mp2}
+\begin{verbatim}
+VFS: Mounted root (nfs filesystem) on device 0:21.
+\end{verbatim}
+  \else
 \begin{verbatim}
 VFS: Mounted root (nfs filesystem) on device 0:16.
 \end{verbatim}
+  \fi
 \fi
 
 If the kernel fails to mount the NFS filesystem, look carefully at the
@@ -271,7 +290,7 @@ this executable.
 
 You can find it by running \code{file hello} on the host:
 
-\if\defstring{\labboard}{beagleplay}
+\if\defstring{\labboardarch}{64bit}
 \begin{verbatim}
   hello: ELF 64-bit LSB executable, ARM aarch64, version 1 (SYSV),
   dynamically linked, interpreter /lib/ld-musl-aarch64.so.1, not stripped
@@ -283,7 +302,7 @@ You can find it by running \code{file hello} on the host:
 \end{verbatim}
 \fi
 
-So, what's missing is the \ifdefstring{\labboard}{beagleplay}{\code{/lib/ld-musl-aarch64.so.1}}{\code{/lib/ld-musl-armhf.so.1}}
+So, what's missing is the \ifdefstring{\labboardarch}{64bit}{\code{/lib/ld-musl-aarch64.so.1}}{\code{/lib/ld-musl-armhf.so.1}}
 executable, which is the dynamic linker required to execute any
 program compiled with shared libraries. Using the \code{find}
 command, look for this file in the toolchain install directory,
